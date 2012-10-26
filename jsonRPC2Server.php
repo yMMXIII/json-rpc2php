@@ -175,18 +175,21 @@ class jsonRPCServer {
 				throw new Exception($this->errorCodes['parseError']);
 			}
 			// Check if this is a batch request
-			if ($this->is_assoc($this->request)){
-				
+			if (!$this->is_assoc($this->request)){
+				// convert it in a "batch" request
+				$this->request = array($this->request)
 			}
-			$requestMethod = explode('.',$this->request['method']);
-			$this->extension = $requestMethod[0];
-			if (!isset($this->classes[$this->extension]) && $this->extension != "rpc"){
-				throw new Exception($this->errorCodes['extensionNotFound']);
+			foreach ($this->request as $request){
+				$requestMethod = explode('.',$request['method']);
+				$this->extension = $requestMethod[0];
+				if (!isset($this->classes[$this->extension]) && $this->extension != "rpc"){
+					throw new Exception($this->errorCodes['extensionNotFound']);
+				}
+				$request['method'] = $requestMethod[1];
+				if (!method_exists($this->classes[$this->extension],$request['method']) && $this->extension != "rpc"){
+					throw new Exception($this->errorCodes['methodNotFound']);
+				}
 			}
-			$this->request['method'] = $requestMethod[1];
-			if (!method_exists($this->classes[$this->extension],$this->request['method']) && $this->extension != "rpc"){
-				throw new Exception($this->errorCodes['methodNotFound']);
-			};
 	
 		} catch (Exception $e) {
 				$this->error($e->getMessage());
@@ -198,7 +201,6 @@ class jsonRPCServer {
 	/**
 	 * Builds the error response
 	 *
-	 * @todo make this in a execption class
 	 * @param string $c the error code
 	 * @param string $fmsg the full message of the error
 	 */
