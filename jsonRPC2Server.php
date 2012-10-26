@@ -120,30 +120,40 @@ class jsonRPCServer {
 	 * responses to 'rpc.' calls.
 	 *
 	 */
-	 public function rpcCalls() {
+	public function rpcCalls() {
 
-	 	if ($this->request['method'] == "listMethods"){
-	 		foreach ($this->classes as $ext => $class){
-	 			$methods[$ext] = get_class_methods($class);
-	 		}
-	 		if (isset($this->request['params']['extension'])){
-	 			if (array_key_exists($this->request['params']['extension'],$this->classes)){
-	 				$this->ok(array($this->request['params']['extension'] => $methods[$this->request['params']['extension']]));
-	 				$this->sendResponse();
-	 			} else {
-	 				$this->error($this->errorCodes['extensionNotFound'],"requested extension not found in extension list." );
-	 				$this->sendResponse();
-	 			}
-	 		} else {
-	 				$this->ok($methods);
-	 				$this->sendResponse();
-	 		}
-	 	} else {
-	 		$this->error($this->errorCodes['methodNotFound']);
-	 		$this->sendResponse();
-	 	}
-	 	return true;
-	 }
+		if ($this->request['method'] == "listMethods"){
+			foreach ($this->classes as $ext => $class){
+				$methods[$ext] = get_class_methods($class);
+			}
+			if (isset($this->request['params']['extension'])){
+				if (array_key_exists($this->request['params']['extension'],$this->classes)){
+					$this->ok(array($this->request['params']['extension'] => $methods[$this->request['params']['extension']]));
+					$this->sendResponse();
+				} else {
+					$this->error($this->errorCodes['extensionNotFound'],"requested extension not found in extension list." );
+					$this->sendResponse();
+				}
+			} else {
+					$this->ok($methods);
+					$this->sendResponse();
+			}
+		} else {
+			$this->error($this->errorCodes['methodNotFound']);
+			$this->sendResponse();
+		}
+		return true;
+	}
+	/**
+	 * returns true if the given array is an assoc
+	 * See: http://stackoverflow.com/a/4254008/973416
+	 * 
+	 * @param  array   $array the array to investigate
+	 * @return boolean        is assoc array
+	 */
+	private function is_assoc(array $array) {
+		return (bool)count(array_filter(array_keys($array), 'is_string'));
+	}
 	/**
 	 * This function validates the incoming json string
 	 * - checks the request method
@@ -163,6 +173,10 @@ class jsonRPCServer {
 			$this->request = json_decode(file_get_contents('php://input'),true);
 			if (empty($this->request)){
 				throw new Exception($this->errorCodes['parseError']);
+			}
+			// Check if this is a batch request
+			if ($this->is_assoc($this->request)){
+				
 			}
 			$requestMethod = explode('.',$this->request['method']);
 			$this->extension = $requestMethod[0];
@@ -255,7 +269,7 @@ class jsonRPCServer {
 			$obj = $this->classes[$this->extension];
 		
 			if (($result = @call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
-				$this->ok((is_array($result)) ? $result : Array($result));
+				$this->ok((is_array($result)) ? $result : array($result));
 			} else {
 				throw new Exception('Method function returned false.');
 			}
