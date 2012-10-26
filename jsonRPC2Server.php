@@ -30,10 +30,40 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  * @version  1.2
  */
 class jsonRPCServer {
+	/**
+	 * Contains available classes
+	 * @var array
+	 */
 	public $classes = array();
+	/**
+	 * Contains all requests
+	 * @var array
+	 */
+	public $requests = array();
+	/**
+	 * contains current to be handled request
+	 * @var array
+	 */
 	public $request;
+	/**
+	 * contains current to be called class
+	 * @var string
+	 */
 	public $extension;
+	/**
+	 * contains the current response array
+	 * @var array
+	 */
 	public $response;
+	/**
+	 * contains the responses
+	 * @var array
+	 */
+	public $responses = array();
+	/**
+	 * errorcode to shortmessage
+	 * @var array
+	 */
 	private $errorMessages = array(
 		'-32700' => 'Parse error',
 		'-32600' => 'Invalid request',
@@ -43,6 +73,10 @@ class jsonRPCServer {
 		'-32604' => 'Authentication error',
 		'-32000' => 'Extension not found'
 		);
+	/**
+	 * errorcode to fullmessage
+	 * @var array
+	 */
 	private $errorMessagesFull = array(
 		'-32700' => 'Invalid JSON was received by the server. An error occurred on the server while parsing the JSON string.',
 		'-32600' => 'The JSON sent is not a valid Request object.',
@@ -52,7 +86,10 @@ class jsonRPCServer {
 		'-32000' => 'The requested extension does not exist / is not available.',
 		'-32604' => 'User unknown / Password / Session id incorrect.'
 		);
-	
+	/**
+	 * camelstyle message to errorcode
+	 * @var array
+	 */
 	private $errorCodes = array(
 		'parseError' 			=> '-32700',
 		'invalidRequest'		=> '-32600',
@@ -62,6 +99,10 @@ class jsonRPCServer {
 		'authenticationError'	=> '-32604',
 		'extensionNotFound'		=> '-32000'
 		);
+	/**
+	 * contains the user => password
+	 * @var array
+	 */
 	private $users = array();
 	/**
 	 * Register a class as an extension
@@ -85,6 +126,21 @@ class jsonRPCServer {
 		foreach ($this->users as $user => $pass){
 		}
 		return true;
+	}
+	/**
+	 * saves the current response into the responses array and
+	 * empties the current response
+	 *
+	 * @return Bool             Return status of saving
+	 */	
+	private function addResponse(){
+		if (!isset($this->response) && is_array($this->response)){
+			$this->responses[] = $this->response;
+			$this->response = "";
+			return true;
+		} else {
+			return false;
+		}
 	}
 	/**
 	 * Handles the authentication
@@ -242,14 +298,32 @@ class jsonRPCServer {
 						);
 	}
 	/**
-	 * check if there is a response needed & sends the response
+	 * check if there is a response needed & sends the response(s)
 	 *
 	 */
 	private function sendResponse(){
-		if (!empty($this->request['id'])) { // notifications don't want response
-			header('content-type: application/json');
-			die( json_encode($this->response) );
+		/**
+		 * Check if there are more than one responses.
+		 * If not, only respond with the first (and only)
+		 * array value.
+		 */
+		if (!isset($this->responses[1])){
+			if (!empty($this->request['id'])) { // notifications don't want response
+				header('content-type: application/json');
+				die( json_encode($this->responses[0]) );
+			}
 		}
+		$responses = array();
+		foreach ($this->responses as $response) {
+			if (!empty($this->request['id'])) { // notifications don't want response
+				continue;
+			} else {
+				$responses[] = $response;
+			}
+		}
+		header('content-type: application/json');
+		die( json_encode($responses) );
+
 	}
 	
 	/**
@@ -257,28 +331,35 @@ class jsonRPCServer {
 	 *
 	 */
 	public function handle() {
-		/* If there are no users defined, don't use authentication */
+		foreach ($this->requests as $request) {
+			$this->request = $request;
 
 		$this->validate();
 
-		try {
-			if (!empty($this->users)){
-	 			$this->authenticate(apache_request_headers());
-	 		}
-			if ($this->extension == "rpc"){
-				$this->rpcCalls();
+			try {
+				if (!empty($this->users)){
+		 			$this->authenticate(apache_request_headers());
+		 		}
+				if ($this->extension == "rpc"){
+					$this->rpcCalls();
+				}
+				$obj = $this->classes[$this->extension];
+			
+				if (($result = @call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
+					$this->ok((is_array($result)) ? $result : array($result));
+				} else {
+					throw new Exception('Method function returned false.');
+				}
+			} catch (Exception $e) {
+					$c = ($e->getCode() != 0) ? $e->getCode : $this->errorCodes['internalError'];
+					$this->error($c,$e->getMessage());
 			}
-			$obj = $this->classes[$this->extension];
-		
-			if (($result = @call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
-				$this->ok((is_array($result)) ? $result : array($result));
-			} else {
-				throw new Exception('Method function returned false.');
-			}
-		} catch (Exception $e) {
-				$c = ($e->getCode() != 0) ? $e->getCode : $this->errorCodes['internalError'];
-				$this->error($c,$e->getMessage());
+			/**
+			 * Save the current response
+			 */
+			$this->addResponse();
 		}
+
 		$this->sendResponse();
 		return true;
 	}
