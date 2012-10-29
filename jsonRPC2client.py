@@ -71,6 +71,27 @@ class jsonrpc2client(object):
 		else:
 			request["params"] = ''
 		jsonrequest = json.dumps(request)
+		return self.__send(jsonrequest,notification)
+	def rpcBatchCall(self,arrayOfRequests):
+		requests = [];
+		for request in arrayOfRequests:
+			RPCcall = {
+				"jsonrpc" : "2.0",
+				"method" : request["method"],
+				}
+			if request.has_key("notification"):
+				if request["notification"] is True:
+					RPCcall["id"] = self.currId + 1
+			else:
+				RPCcall["id"] = self.currId + 1
+			if request.has_key("params"):
+				RPCcall["params"] = request["params"]
+			else:
+				RPCcall["params"] = []
+			requests.append(RPCcall)
+		jsonrequest = json.dumps(requests)
+		return __send(jsonrequest)
+	def __send(self,jsonrequest,notification):
 		headers = {"Content-Type": "application/json","Content-lenght":str(len(jsonrequest))}
 		if self.defaultOptions["username"] is not "" and self.defaultOptions["password"] is not "":
 			if self.defaultOptions["sessionId"] is "":
@@ -85,8 +106,9 @@ class jsonrpc2client(object):
 		if type(sessionId) is str:
 			self.defaultOptions["sessionId"] = sessionId
 		f = fr.read()
-		if notification is False:
+		if f_obj is not "":
 			f_obj = json.loads(f)
+			#@todo: Fix this: for each request if the response is a list
 			if f_obj["error"] is not None:
 				raise rpcException(f_obj["error"])
 			else:
