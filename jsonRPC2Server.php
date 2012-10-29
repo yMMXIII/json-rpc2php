@@ -220,36 +220,20 @@ class jsonRPCServer {
 	 * @return boolean
 	 */
 	private function validate() {
-
-
 		try {
-			if ($_SERVER['REQUEST_METHOD'] != 'POST' || empty($_SERVER['CONTENT_TYPE']) || strpos($_SERVER['CONTENT_TYPE'], 'application/json') === false) {
-				throw new Exception($this->errorCodes['invalidRequest']);
+			$request = $this->request;
+			$requestMethod = explode('.',$request['method']);
+			$this->extension = $requestMethod[0];
+			if (!isset($this->classes[$this->extension]) && $this->extension != "rpc"){
+				throw new Exception($this->errorCodes['extensionNotFound']);
 			}
-			$this->request = json_decode(file_get_contents('php://input'),true);
-			if (empty($this->request)){
-				throw new Exception($this->errorCodes['parseError']);
+			$request['method'] = $requestMethod[1];
+			if (!method_exists($this->classes[$this->extension],$request['method']) && $this->extension != "rpc"){
+				throw new Exception($this->errorCodes['methodNotFound']);
 			}
-			// Check if this is a batch request
-			if (!$this->is_assoc($this->request)){
-				// convert it in a "batch" request
-				$this->request = array($this->request)
-			}
-			foreach ($this->request as $request){
-				$requestMethod = explode('.',$request['method']);
-				$this->extension = $requestMethod[0];
-				if (!isset($this->classes[$this->extension]) && $this->extension != "rpc"){
-					throw new Exception($this->errorCodes['extensionNotFound']);
-				}
-				$request['method'] = $requestMethod[1];
-				if (!method_exists($this->classes[$this->extension],$request['method']) && $this->extension != "rpc"){
-					throw new Exception($this->errorCodes['methodNotFound']);
-				}
-			}
-	
 		} catch (Exception $e) {
 				$this->error($e->getMessage());
-				$this->sendResponse();
+				$this->addResponse();
 				return false;
 		}
 		return true;
@@ -279,15 +263,19 @@ class jsonRPCServer {
 		return true;
 	}
 	private function toUtf8(array $array) { 
-    $convertedArray = array(); 
-    foreach($array as $key => $value) { 
-      if(!mb_check_encoding($key, 'UTF-8')) $key = utf8_encode($key); 
-      if(is_array($value)) $value = $this->toUtf8($value); 
+	    $convertedArray = array(); 
+	    foreach($array as $key => $value) { 
+			if(!mb_check_encoding($key, 'UTF-8')) $key = utf8_encode($key); 
+			if(is_array($value)) $value = $this->toUtf8($value); 
 
-      $convertedArray[$key] = $value; 
-    } 
-    return $convertedArray; 
-  } 
+			$convertedArray[$key] = $value; 
+	    } 
+	    return $convertedArray; 
+  	}	
+  	/**
+  	 * Creates a successfull response
+  	 * @param  array/string/bool $result result of executed rpc method 
+  	 */
 	private function ok($result){
 					//print_r($result);
 					$this->response = array (
@@ -331,10 +319,23 @@ class jsonRPCServer {
 	 *
 	 */
 	public function handle() {
+			if ($_SERVER['REQUEST_METHOD'] != 'POST' || empty($_SERVER['CONTENT_TYPE']) || strpos($_SERVER['CONTENT_TYPE'], 'application/json') === false) {
+				throw new Exception($this->errorCodes['invalidRequest']);
+			}
+			$this->requests = json_decode(file_get_contents('php://input'),true);
+			if (empty($this->request)){
+				throw new Exception($this->errorCodes['parseError']);
+			}
+			// Check if this is a batch request
+			if (!$this->is_assoc($this->requests)){
+				// convert it in a "batch" request
+				$this->requests = array($this->requests)
+			}
+
 		foreach ($this->requests as $request) {
 			$this->request = $request;
 
-		$this->validate();
+			$this->validate();
 
 			try {
 				if (!empty($this->users)){
