@@ -117,9 +117,15 @@ class jsonrpc2client(object):
 		if f is not "":
 			f_obj = json.loads(f)
 			#@todo: Fix this: for each request if the response is a list
-			print(type(f_obj));
-			if f_obj["error"] is not None:
-				raise rpcException(f_obj["error"])
+			print("Return type:",type(f_obj))
+			if (isinstance(f_obj,dict)):
+				f_obj = [f_obj]
+			for f_object in f_obj:
+
+				if f_object["error"] is not None:
+					raise rpcException(f_object["error"])
+			if len(f_obj) == 1:
+				return f_obj[0]
 			else:
 				return f_obj
 	def __getattr__(self,method):
@@ -156,6 +162,9 @@ rpc = jsonrpc2client("http://localhost/json-rpc2php/api.php","myClass",{
 	"username": "test",
 	"password" : "test"
 	})
+print("Simple:")
+rpc.ping("simple")
+print("Batch:")
 print(rpc.rpcBatchCall([
 	{
 	"method" : "ping",
