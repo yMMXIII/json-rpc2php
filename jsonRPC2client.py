@@ -72,12 +72,13 @@ class jsonrpc2client(object):
 			request["params"] = ''
 		jsonrequest = json.dumps(request)
 		return self.__send(jsonrequest,notification)
+
 	def rpcBatchCall(self,arrayOfRequests):
 		requests = [];
 		for request in arrayOfRequests:
 			RPCcall = {
 				"jsonrpc" : "2.0",
-				"method" : request["method"],
+				"method" :self.useClass + "." + request["method"],
 				}
 			if request.has_key("notification"):
 				if request["notification"] is True:
@@ -85,13 +86,19 @@ class jsonrpc2client(object):
 			else:
 				RPCcall["id"] = self.currId + 1
 			if request.has_key("params"):
-				RPCcall["params"] = request["params"]
+				if isinstance(request["params"],str):
+					RPCcall["params"] = [request["params"]]
+				elif isinstance(request["params"],list):
+					RPCcall["params"] = request["params"]
+				else:
+					RPCcall["params"] = ''
 			else:
-				RPCcall["params"] = []
+				RPCcall["params"] = ''
 			requests.append(RPCcall)
 		jsonrequest = json.dumps(requests)
-		return __send(jsonrequest)
-	def __send(self,jsonrequest,notification):
+		return self.__send(jsonrequest,False)
+
+	def __send(self,jsonrequest,notification,):
 		headers = {"Content-Type": "application/json","Content-lenght":str(len(jsonrequest))}
 		if self.defaultOptions["username"] is not "" and self.defaultOptions["password"] is not "":
 			if self.defaultOptions["sessionId"] is "":
@@ -100,15 +107,17 @@ class jsonrpc2client(object):
 			else:
 				headers['x-RPC-Auth-Session'] = self.defaultOptions['sessionId']
 		print headers
+		print "data:",jsonrequest
 		req = urllib2.Request(self.host,headers = headers, data = jsonrequest)
 		fr = urllib2.urlopen(req)
 		sessionId = fr.info().getheader('x-RPC-Auth-Session')
 		if type(sessionId) is str:
 			self.defaultOptions["sessionId"] = sessionId
 		f = fr.read()
-		if f_obj is not "":
+		if f is not "":
 			f_obj = json.loads(f)
 			#@todo: Fix this: for each request if the response is a list
+			print(type(f_obj));
 			if f_obj["error"] is not None:
 				raise rpcException(f_obj["error"])
 			else:
@@ -143,3 +152,18 @@ class rpcException(Exception):
 		else:
 			message = jsonrpc2Error
 		Exception.__init__(self, message)
+rpc = jsonrpc2client("http://localhost/json-rpc2php/api.php","myClass",{
+	"username": "test",
+	"password" : "test"
+	})
+print(rpc.rpcBatchCall([
+	{
+	"method" : "ping",
+	"params"	: "test"
+	},{
+	"method" : "ping",
+	"params"	: "test2"
+	},{
+	"method" : "ping",
+	"params"	: "test3"
+	}]))
