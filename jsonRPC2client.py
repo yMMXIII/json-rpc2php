@@ -106,8 +106,6 @@ class jsonrpc2client(object):
 					headers['x-RPC-Auth-Password'] = self.defaultOptions["password"]
 			else:
 				headers['x-RPC-Auth-Session'] = self.defaultOptions['sessionId']
-		print headers
-		print "data:",jsonrequest
 		req = urllib2.Request(self.host,headers = headers, data = jsonrequest)
 		fr = urllib2.urlopen(req)
 		sessionId = fr.info().getheader('x-RPC-Auth-Session')
@@ -116,12 +114,10 @@ class jsonrpc2client(object):
 		f = fr.read()
 		if f is not "":
 			f_obj = json.loads(f)
-			#@todo: Fix this: for each request if the response is a list
-			print("Return type:",type(f_obj))
 			if (isinstance(f_obj,dict)):
 				f_obj = [f_obj]
 			for f_object in f_obj:
-
+				#TODO: Make this properly. Re-write exception to accept lists of errors
 				if f_object["error"] is not None:
 					raise rpcException(f_object["error"])
 			if len(f_obj) == 1:
@@ -163,7 +159,7 @@ rpc = jsonrpc2client("http://localhost/json-rpc2php/api.php","myClass",{
 	"password" : "test"
 	})
 print("Simple:")
-rpc.ping("simple")
+print(rpc.ping("simple"))
 print("Batch:")
 print(rpc.rpcBatchCall([
 	{

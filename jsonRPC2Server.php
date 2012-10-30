@@ -303,12 +303,13 @@ class jsonRPCServer {
 		}
 		$responses = array();
 		foreach ($this->responses as $response) {
-			if (!empty($this->request['id'])) { // notifications don't want response
+			if (empty($this->request['id'])) { // notifications don't want response
 				continue;
 			} else {
 				$responses[] = $response;
 			}
 		}
+
 		header('content-type: application/json');
 		die( json_encode($responses) );
 
@@ -347,7 +348,6 @@ class jsonRPCServer {
 				if ($this->extension == "rpc"){
 					$this->rpcCalls();
 				} else {
-					error_log(json_)
 					$obj = $this->classes[$this->extension];
 					error_log("calling: ".$this->extension."->".$this->request['method']."(".join(",",$this->request['params']).")");
 					if (($result = @call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
