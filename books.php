@@ -5,5 +5,5 @@ if(!$rpc_sess) die("Please login!");
 
 $Books = new jsonRPCClient($ServerURL, 'Books', $rpc_sess);
 
-print_r($Books->read(array('t1'=>"Привет!")));
+print_r($Books->read(array('t1'=>"test array")));
 
