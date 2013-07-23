@@ -1,4 +1,4 @@
-<?
+<?php
 /*
                     COPYRIGHT
 
@@ -50,8 +50,8 @@ class jsonRPCClient {
         if (!empty($this->auth)){
             if (isset($this->auth['sessionId'])){
                 $headers["X-RPC-Auth-Session"] = $this->auth['sessionId'];
-            } else {
-
+            }
+			if(isset($this->auth['username']) && isset($this->auth['password'])) {
                 $headers["X-RPC-Auth-Username"] = $this->auth['username'];
                 $headers["X-RPC-Auth-Password"] = $this->auth['password'];
             }
@@ -70,7 +70,7 @@ class jsonRPCClient {
         $nHeaders = array();
         foreach ($headers as $header) {
             $h = explode(": ", $header);
-            $nHeaders[$h[0]] = $h[1];
+            $nHeaders[$h[0]] = isset($h[1])? $h[1]:'';
         }
         return $nHeaders;
     }
@@ -82,7 +82,7 @@ class jsonRPCClient {
         if (!is_scalar($method)) {
             throw new Exception('Method name has no scalar value');
         }
-        
+
         // check
         if (is_array($params)) {
             // no keys
@@ -105,28 +105,32 @@ class jsonRPCClient {
         $opts = array ('http' => array (
                             'method'  => 'POST',
                             'header'  => $this->constructHeaders(),
-                            'content' => json_encode($request)
+                            'content' => json_encode($request,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK)
                             ));
         $context  = stream_context_create($opts);
         if ($fp = fopen($this->url, 'r', false, $context)) {
             $h = $this->parseHeaders($http_response_header);
-            print_r($h);
+            //print_r($h);
             if (isset($h['x-RPC-Auth-Session'])){
-                print("setting session id to " . $h['x-RPC-Auth-Session']);
+                //echo "setting session id to " . $h['x-RPC-Auth-Session']. "\n";
                 $this->auth['sessionId'] = $h['x-RPC-Auth-Session'];
+
+				if(session_id() && !isset($_SESSION["rpcsid"])){
+					$_SESSION["rpcsid"] = $this->auth['sessionId'];
+				}
             }
             $response = '';
             while($row = fgets($fp)) {
                 $response.= trim($row)."\n";
             }
-        echo "resp:".$response;
+        //echo "resp:".$response;
             $response = json_decode($response,true);
         } else {
             throw new Exception('Unable to connect to '.$this->url);
         }
         if (!$this->notification) {
             // check
-        print_r($response);
+        //print_r($response);
             if ($response['id'] != $currentId) {
                 throw new Exception('Incorrect response id (request id: '.$currentId.', response id: '.$response['id'].')');
             }
@@ -134,11 +138,16 @@ class jsonRPCClient {
                 throw new Exception('Request error: '.$response['error']['code'].'::'.$response['error']['message'].':'.$response['error']['code']);
             }
             return $response['result'];
-            
+
         } else {
             return true;
         }
 
     }
 }
-?>
+
+function restore_rpc_session(){
+    session_start();
+    if(!isset($_SESSION["rpcsid"])) return array();
+    return array("sessionId"=>$_SESSION["rpcsid"]);
+}
