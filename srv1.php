@@ -31,6 +31,15 @@ class Users {
 		return $this->user!=''?'ok':'auth error';
     }
 
+	//switch from root to user
+    public function authas($user) {
+		if($this->user=='root' && isset($AuthUsers[$user])){
+			$this->user = $user;
+			return 'ok';
+		}
+		return 'auth error';
+    }
+
     public function getBook() {
 		return $this->book;
     }
