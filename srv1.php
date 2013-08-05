@@ -2,7 +2,6 @@
 require_once('server-conf.php');
 $srv = new jsonRPCServer($AuthUsers);
 $UserLogin = $srv->AuthUser();
-if(!$UserLogin) die("no login!");
 
 class Books {
 	private $title;
@@ -33,6 +32,7 @@ class Users {
 
 	//switch from root to user
     public function authas($user) {
+		global $AuthUsers;
 		if($this->user=='root' && isset($AuthUsers[$user])){
 			$this->user = $user;
 			return 'ok';

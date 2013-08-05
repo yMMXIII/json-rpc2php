@@ -3,8 +3,16 @@ require_once 'client-conf.php';
 $rpc_sess = array_merge($AuthUser, restore_rpc_session()); //reauth user
 
 echo "<pre>";
-print_r($rpc_sess);
-echo "\n";
+//print_r($rpc_sess);
+//echo "\n";
 
 $Users = new jsonRPCClient($ServerURL, 'Users', $rpc_sess);
-print_r($Users->auth());
+try{
+	$Users->auth();
+} catch (Exception $e) {
+	print_r($e->getMessage());
+	die("\nAuth Failed");
+}
+
+echo "OK";
+

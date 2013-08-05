@@ -73,12 +73,16 @@ class jsonRPCServer {
 	public function AuthUser(){
 		if(!$this->users) return '';
 
+		if (empty($this->request)){
+			$this->request = json_decode(file_get_contents('php://input'),true);
+		}
+
 		try {
  			$user = $this->authenticate(apache_request_headers());
 			$this->authUser = $user;
 			return $user;
  		} catch (Exception $e) {
-			$c = ($e->getCode() != 0) ? $e->getCode : $this->errorCodes['internalError'];
+			$c = ($e->getCode() != 0) ? $e->getCode : $this->errorCodes['authenticationError'];
 			$this->error($c,$e->getMessage());
 			$this->sendResponse();
 		}
@@ -202,7 +206,9 @@ class jsonRPCServer {
 			if ($_SERVER['REQUEST_METHOD'] != 'POST' || empty($_SERVER['CONTENT_TYPE']) || strpos($_SERVER['CONTENT_TYPE'], 'application/json') === false) {
 				throw new Exception($this->errorCodes['invalidRequest']);
 			}
-			$this->request = json_decode(file_get_contents('php://input'),true);
+			if (empty($this->request)){
+				$this->request = json_decode(file_get_contents('php://input'),true);
+			}
 			if (empty($this->request)){
 				throw new Exception($this->errorCodes['parseError']);
 			}
