@@ -305,37 +305,23 @@ class jsonRPCServer {
 				$this->rpcCalls();
 			}
 			$obj = $this->classes[$this->extension];
-<<<<<<< HEAD
 
-			if (($result = @call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
+			if (($result = call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
 				//$this->ok((is_array($result)) ? $result : Array($result));
 				$this->ok($result);
-=======
-		
-			if (($result = call_user_func_array(array($obj,$this->request['method']),$this->request['params'])) !== false) {
-				$this->ok((is_array($result)) ? $result : Array($result));
->>>>>>> 16315bf804f69b6c8399b23f153b44f5aa1be523
 			} else {
 				throw new jsonRPCException('Method function returned false.');
 			}
-<<<<<<< HEAD
 
-		} catch (Exception $e) {
-				$c = ($e->getCode() != 0) ? $e->getCode : $this->errorCodes['internalError'];
-				$this->error($c,$e->getMessage());
-=======
 		} catch (jsonRPCException $e) {
 				$c = ($e->getCode() != 0) ? $e->getCode() : $this->errorCodes['internalError'];
 				$this->error($c,$e->getMessage(),$e->_getErrorData());
->>>>>>> 16315bf804f69b6c8399b23f153b44f5aa1be523
 		}
 		$this->sendResponse();
 		return true;
 	}
 
 }
-<<<<<<< HEAD
-=======
 Class jsonRPCException extends Exception {
 	private $_errorData;
 
@@ -353,4 +339,3 @@ Class jsonRPCException extends Exception {
 	}
 }
 ?>
->>>>>>> 16315bf804f69b6c8399b23f153b44f5aa1be523
