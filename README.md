@@ -13,10 +13,14 @@ it contains the following:
 
 * a json-RPC2 client in Python (using urllib2 and json)
 
+* *NEW* a json-RPC2 client library in Vala (using json-glib-1.0 and libsoup-2.4)
+
 Open Source
 ------------
 
-json-rpc2php is open source under GPLv2 licence. Please consider a [donation](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=J8RZGZC5WPZDU&lc=BE&item_name=Subutux&item_number=TRANSRSS&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted) so I can keep working on this.
+json-rpc2php is open source under GPLv2 licence. Please consider a donation so I can keep working on this.
+
+[![donation](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=J8RZGZC5WPZDU&lc=BE&item_name=Stijn%20Van%20Campenhout%20Develops&item_number=CODE%20DONATION&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted)
 
 Features php server
 --------------------
@@ -43,16 +47,44 @@ Features javascript client library
 Authentication is is used when you define a username and password variable in the Options
 
 Features PHP Client 
--------------------------
+-------------------
 * Simple usage: Directly call object function from client class
 
 Authentication is used when you pass an array containing "username" => "" and "password" => "" to the class init as the last parameter
 
-Features Python Client *NEW*
-----------------------------
+Features Python Client
+----------------------
 * Simple usage: Directly call object function from client class (the same as the PHP client)
 
 Authentication is is used when you define a username and password variable in the Options
+
+Features Vala (or raw C) Client *NEW*
+-------------------------------------
+
+Overhall functionallity is the same as the php & python client, except for
+executing the request. this is done by `JsonRPC2.JsonRPC2client.request(string method, string[] params)`
+
+Supports authentication using the `JsonRPC2.JsonRPC2client.authenticate(username,password)`
+
+Compilation of the library is as followed:
+
+```bash
+valac --pkg json-glib-1.0 --pkg libsoup-2.4 --library=JsonRPC2 -H JsonRPC2.h jsonrpc2.vala -X -fPIC -X -shared -o JsonRPC2.so
+```
+
+Compilation against the library:
+
+```bash
+valac --pkg json-glib-1.0 --pkg libsoup-2.4 JsonRPC2.vapi your-vala-project.vala -X JsonRPC2.so -X -I . -o your-vala-project
+```
+
+You'll need some extra packages to use/compile JsonRPC2. For ex. Ubuntu & Debian:
+```bash
+sudo apt-get install libjson-glib-1.0 libjson-glib-1.0 libsoup-2.4 libsoup-2.4-dev #I think
+```
+
+This is my first Vala library. Any improvements are welcome.
+
 
 Example server
 --------------
@@ -120,5 +152,12 @@ Outputs:
 {u'error': None, u'jsonrpc': u'2.0', u'id': 1, u'result': [u'pong:testing one 2 three']}
 """
 ```
+<<<<<<< HEAD
 	
 (fork)
+=======
+Example Vala client
+-------------------
+
+See examples/example.vala
+>>>>>>> 16315bf804f69b6c8399b23f153b44f5aa1be523
