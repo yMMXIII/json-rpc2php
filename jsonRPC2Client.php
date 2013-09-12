@@ -87,6 +87,9 @@ class jsonRPCClient {
         if (is_array($params)) {
             // no keys
             $params = array_values($params);
+//			if(count($params)==1){
+//				$params = array_pop($params);
+//			}
         } else {
             throw new Exception('Params must be given as array');
         }
@@ -99,7 +102,7 @@ class jsonRPCClient {
         $request = array(
                 'jsonrpc' => '2.0',
                 'method' => ($this->class) ? ($this->class . '.' . $method) : $method,
-                'params' => count($params)==1 ? $params[0]: $params,	//'params' => $params,
+                'params' => $params,
                 'id' => $this->id
             );
 

@@ -8,7 +8,7 @@ echo "<pre>";
 
 $Users = new jsonRPCClient($ServerURL, 'Users', $rpc_sess);
 try{
-	print_r($Users->auth());
+	print_r($Users->auth("user1"));
 } catch (Exception $e) {
 	print_r($e->getMessage());
 	die("\nAuth Failed");

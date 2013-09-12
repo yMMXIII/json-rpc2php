@@ -12,7 +12,6 @@ class Books {
 
     public function read($msg,$chap='') {
 		return "$this->title: $msg, $chap";
-		return $_SESSION;
     }
 }
 
@@ -22,22 +21,32 @@ class Users {
 	private $book;
 
 	public function __construct($Login){
-		$this->user = $Login;
+		if(isset($_SESSION["authasuser"])){
+			$this->user = $_SESSION["authasuser"];
+		}else{
+			$this->user = $Login;
+		}
+
 		$this->book = new Books($this->user."'s  Book");
 	}
 
-    public function auth() {
-		return $this->user!=''?'ok':'auth error';
-    }
-
-	//switch from root to user
-    public function authas($user) {
+    public function auth($AsUser='') {
 		global $AuthUsers;
-		if($this->user=='root' && isset($AuthUsers[$user])){
-			$this->user = $user;
-			return 'ok';
+
+		if($AsUser!=''){
+			if($this->user=='root' && isset($AuthUsers[$AsUser])){
+				$this->user = $AsUser;
+				$_SESSION["authasuser"] = $AsUser;
+			}
+			return "ok, welcome $this->user";
 		}
-		return 'auth error';
+
+		if(isset($_SESSION["authasuser"])) unset($_SESSION["authasuser"]);
+		if($this->user!=''){
+			return "ok, welcome $this->user";
+		}else{
+			return 'auth error';
+		}
     }
 
     public function getBook() {
