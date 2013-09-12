@@ -98,10 +98,11 @@ class jsonRPCClient {
         }
         $request = array(
                 'jsonrpc' => '2.0',
-                'method' => $this->class . '.' . $method,
-                'params' => $params,
+                'method' => ($this->class) ? ($this->class . '.' . $method) : $method,
+                'params' => count($params)==1 ? $params[0]: $params,	//'params' => $params,
                 'id' => $this->id
             );
+
         $opts = array ('http' => array (
                             'method'  => 'POST',
                             'header'  => $this->constructHeaders(),
@@ -134,7 +135,7 @@ class jsonRPCClient {
             if ($response['id'] != $currentId) {
                 throw new Exception('Incorrect response id (request id: '.$currentId.', response id: '.$response['id'].')');
             }
-            if (!is_null($response['error'])) {
+            if (isset($response['error']) && !is_null($response['error'])) {
                 throw new Exception('Request error: '.$response['error']['code'].'::'.$response['error']['message'].':'.$response['error']['code']);
             }
             return $response['result'];
