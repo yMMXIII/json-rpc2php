@@ -10,8 +10,8 @@ class Books {
 		$this->title = $title;
 	}
 
-    public function read($msg) {
-		return "$this->title: ". serialize($msg);
+    public function read($msg,$chap='') {
+		return "$this->title: $msg, $chap";
 		return $_SESSION;
     }
 }
