@@ -106,7 +106,7 @@ class jsonRPCClient {
         $opts = array ('http' => array (
                             'method'  => 'POST',
                             'header'  => $this->constructHeaders(),
-                            'content' => json_encode($request,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK)
+                            'content' => json_encode($request,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE)
                             ));
         $context  = stream_context_create($opts);
         if ($fp = fopen($this->url, 'r', false, $context)) {

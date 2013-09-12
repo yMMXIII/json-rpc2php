@@ -283,7 +283,7 @@ class jsonRPCServer {
 	private function sendResponse(){
 		if (!empty($this->request['id'])) { // notifications don't want response
 			header('content-type: application/json');
-			die( json_encode($this->response, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE|JSON_NUMERIC_CHECK) );
+			die( json_encode($this->response, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) );
 		}
 	}
 
